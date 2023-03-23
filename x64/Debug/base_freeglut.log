@@ -1,0 +1,5 @@
+﻿  lsystem.cpp
+C:\Users\Chan Ng Cashin\OneDrive\Documents\Senior\ECE30834\a4_base\src\lsystem.hpp(36,1): warning C4267: 'return': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\Chan Ng Cashin\OneDrive\Documents\Senior\ECE30834\a4_base\src\lsystem.cpp(130,33): warning C4101: 'e': unreferenced local variable
+C:\Users\Chan Ng Cashin\OneDrive\Documents\Senior\ECE30834\a4_base\src\lsystem.cpp(234,25): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
+  base_freeglut.vcxproj -> C:\Users\Chan Ng Cashin\OneDrive\Documents\Senior\ECE30834\a4_base\x64\Debug\base_freeglut.exe
