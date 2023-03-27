@@ -41,7 +41,7 @@ void cleanup();
 
 // Program entry point
 int main(int argc, char** argv) {
-	std::string configFile = "models/tree1.txt";
+	std::string configFile = "models/dragon.txt";
 	if (argc > 1)
 		configFile = std::string(argv[1]);
 

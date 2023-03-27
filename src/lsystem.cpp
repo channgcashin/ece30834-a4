@@ -4,6 +4,7 @@
 #include <sstream>
 #include <stack>
 #include <glm/gtc/type_ptr.hpp>
+#include <math.h>
 #include "util.hpp"
 
 // Stream processing helper functions
@@ -102,13 +103,21 @@ void LSystem::parse(std::istream& istr) {
 
 	// Remove this line
 	//throw std::runtime_error("Parser not implemented");
-	inAngle = std::stof(trim(getNextLine(istr)));
-	inIters = std::stoul(trim(getNextLine(istr)));
-	inAxiom = trim(getNextLine(istr));
-	std::cout << inAngle;
-
-
-
+	std:: string tmp;
+	char key;
+	istr>>tmp;
+	inAngle = std::stof(tmp);
+	istr>>tmp;
+	inIters = std::stoi(tmp);
+	istr>>tmp;
+	inAxiom = tmp;
+	
+	while(istr>>tmp){
+		key = tmp[0];
+		istr>>tmp;
+		istr>>tmp;
+		inRules[key] = tmp;
+	}
 
 	// Make your changes above this line
 	// END TODO ===============================================================
@@ -204,9 +213,17 @@ std::string LSystem::applyRules(std::string string) {
 	// TODO: ==================================================================
 	// Apply rules to the input string
 	// Return the resulting string
-
+	std::string ret;
+	for(auto ch : string){
+		if(rules.count(ch)){
+			ret += rules[ch];
+		}
+		else{
+			ret += ch;
+		}
+	}
 	// Replace this line with your implementation
-	return "";
+	return ret;
 }
 
 // Generate the geometry corresponding to the string at the given iteration
@@ -217,7 +234,47 @@ std::vector<glm::vec2> LSystem::createGeometry(std::string string) {
 	// Generate geometry from a string
 	// Return a vector of vertices, with every two vertices making a 2D line
 	// segment.
-
+	glm::vec2 curr = glm::vec2(0.0f, 0.0f);
+	glm::vec2 prev = glm::vec2(0.0f, 0.0f);
+	float ang = 90;
+	std::stack<glm::vec2> curr_stack;
+	std::stack<glm::vec2> prev_stack;
+	std::stack<float> ang_stack;
+	float pi = 3.1415926;
+	//float ang = angle * (math.pi/180) + (math.pi/2);
+	for(auto ch : string){
+		if (ch == 'f' || ch == 'F' || ch == 'g' || ch == 'G') {
+			curr[0] = cos((ang*pi)/180) + curr[0];
+			curr[1] = sin((ang*pi)/180) + curr[1];
+			verts.push_back(prev);
+			verts.push_back(curr);
+			prev = curr;
+		}
+		else if (ch == 's' || ch == 'S') {
+			curr[0] = cos((ang*pi)/180) + curr[0];
+			curr[1] = sin((ang*pi)/180) + curr[1];
+			prev = curr;
+		}
+		else if(ch == '+'){
+			ang += angle;
+		}
+		else if(ch == '-'){
+			ang -= angle;
+		}
+		else if(ch == '['){
+			prev_stack.push(prev);
+			curr_stack.push(curr);
+			ang_stack.push(ang);
+		}
+		else if(ch == ']'){
+			prev = prev_stack.top();
+			curr = curr_stack.top();
+			ang = ang_stack.top();
+			prev_stack.pop();
+			curr_stack.pop();
+			ang_stack.pop();
+		}
+	}
 	return verts;
 }
 
