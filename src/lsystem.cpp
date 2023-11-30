@@ -173,7 +173,7 @@ unsigned int LSystem::iterate() {
 
 	// Check for too-large buffer
 	auto& id = iterData.back();
-	if ((id.first + id.count + verts.size()) * sizeof(glm::vec2) > MAX_BUF)
+	if ((id.first + id.count + verts.size()) * sizeof(glm::vec3) > MAX_BUF)
 		throw std::runtime_error("geometry exceeds maximum buffer size");
 
 
@@ -185,20 +185,20 @@ unsigned int LSystem::iterate() {
 }
 
 // Draw the latest iteration of the L-System
-void LSystem::draw(glm::mat3 viewProj) {
+void LSystem::draw(glm::mat4 viewProj) {
 	if (!getNumIter()) return;
 	drawIter(getNumIter() - 1, viewProj);
 }
 
 // Draw a specific iteration of the L-System
-void LSystem::drawIter(unsigned int iter, glm::mat3 viewProj) {
+void LSystem::drawIter(unsigned int iter, glm::mat4 viewProj) {
 	IterData& id = iterData.at(iter);
 
 	glUseProgram(shader);
 	glBindVertexArray(vao);
 
 	// Send matrix to shader
-	glm::mat3 xform = viewProj * id.bbfix;
+	glm::mat4 xform = viewProj * id.bbfix;
 	glUniformMatrix3fv(xformLoc, 1, GL_FALSE, glm::value_ptr(xform));
 	// Draw L-System
 	glDrawArrays(GL_LINES, id.first, id.count);
@@ -227,18 +227,18 @@ std::string LSystem::applyRules(std::string string) {
 }
 
 // Generate the geometry corresponding to the string at the given iteration
-std::vector<glm::vec2> LSystem::createGeometry(std::string string) {
-	std::vector<glm::vec2> verts;
+std::vector<glm::vec3> LSystem::createGeometry(std::string string) {
+	std::vector<glm::vec3> verts;
 
 	// TODO: ==================================================================
 	// Generate geometry from a string
 	// Return a vector of vertices, with every two vertices making a 2D line
 	// segment.
-	glm::vec2 curr = glm::vec2(0.0f, 0.0f);
-	glm::vec2 prev = glm::vec2(0.0f, 0.0f);
+	glm::vec3 curr = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 prev = glm::vec3(0.0f, 0.0f, 0.0f);
 	float ang = 90;
-	std::stack<glm::vec2> curr_stack;
-	std::stack<glm::vec2> prev_stack;
+	std::stack<glm::vec3> curr_stack;
+	std::stack<glm::vec3> prev_stack;
 	std::stack<float> ang_stack;
 	float pi = 3.1415926;
 	//float ang = angle * (math.pi/180) + (math.pi/2);
@@ -279,7 +279,7 @@ std::vector<glm::vec2> LSystem::createGeometry(std::string string) {
 }
 
 // Add given geometry to the OpenGL vertex buffer and update state accordingly
-void LSystem::addVerts(std::vector<glm::vec2>& verts) {
+void LSystem::addVerts(std::vector<glm::vec3>& verts) {
 	// Add iteration data
 	IterData id;
 	if (iterData.empty())
@@ -291,21 +291,22 @@ void LSystem::addVerts(std::vector<glm::vec2>& verts) {
 	id.count = verts.size();
 
 	// Calculate bounding box and create adjustment matrix
-	glm::vec2 minBB = glm::vec2(std::numeric_limits<float>::max());
-	glm::vec2 maxBB = glm::vec2(std::numeric_limits<float>::lowest());
+	glm::vec3 minBB = glm::vec3(std::numeric_limits<float>::max());
+	glm::vec3 maxBB = glm::vec3(std::numeric_limits<float>::lowest());
 	for (auto& v : verts) {
 		minBB = glm::min(minBB, v);
 		maxBB = glm::max(maxBB, v);
 	}
-	glm::vec2 diag = maxBB - minBB;
+	glm::vec3 diag = maxBB - minBB;
 	float scale = 1.9f / glm::max(diag.x, diag.y);
-	id.bbfix = glm::mat3(1.0f);
+	id.bbfix = glm::mat4(1.0f);
 	id.bbfix[0][0] = scale;
 	id.bbfix[1][1] = scale;
-	id.bbfix[2] = glm::vec3(-(minBB + maxBB) * scale / 2.0f, 1.0f);
+	id.bbfix[2][2] = scale;
+	id.bbfix[3] = glm::vec4(-(minBB + maxBB) * scale / 2.0f, 1.0f);
 	iterData.push_back(id);
 
-	GLsizei newSize = (id.first + id.count) * sizeof(glm::vec2);
+	GLsizei newSize = (id.first + id.count) * sizeof(glm::vec3);
 	if (newSize > bufSize) {
 		// Create a new vertex buffer to hold vertex data
 		GLuint tempBuf;
@@ -330,7 +331,7 @@ void LSystem::addVerts(std::vector<glm::vec2>& verts) {
 
 	// Upload new vertex data
 	glBufferSubData(GL_ARRAY_BUFFER,
-		id.first * sizeof(glm::vec2), id.count * sizeof(glm::vec2), verts.data());
+		id.first * sizeof(glm::vec3), id.count * sizeof(glm::vec3), verts.data());
 
 
 	// Reset vertex data source (format)
@@ -341,7 +342,7 @@ void LSystem::addVerts(std::vector<glm::vec2>& verts) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (GLvoid*)0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);

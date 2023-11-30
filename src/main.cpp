@@ -147,7 +147,7 @@ void display() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	float aspect = (float)width / (float)height;
-	glm::mat3 proj(1.0f);
+	glm::mat4 proj(1.0f);
 	proj[0][0] = glm::min(1.0f / aspect, 1.0f);
 	proj[1][1] = glm::min(aspect / 1.0f, 1.0f);
 

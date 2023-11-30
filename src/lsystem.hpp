@@ -28,8 +28,8 @@ public:
 	unsigned int iterate();
 
 	// Draw the L-System
-	void draw(glm::mat3 viewProj);
-	void drawIter(unsigned int iter, glm::mat3 viewProj);
+	void draw(glm::mat4 viewProj);
+	void drawIter(unsigned int iter, glm::mat4 viewProj);
 
 	// Data access
 	unsigned int getNumIter() const {
@@ -41,7 +41,7 @@ private:
 	// Apply rules to a given string and return the result
 	std::string applyRules(std::string string);
 	// Create geometry for a given string and return the vertices
-	std::vector<glm::vec2> createGeometry(std::string string);
+	std::vector<glm::vec3> createGeometry(std::string string);
 
 	std::vector<std::string> strings;	// String representation of each iteration
 	std::map<char, std::string> rules;	// Generation rules
@@ -51,7 +51,7 @@ private:
 	struct IterData {
 		GLint first;		// Starting index in vertex buffer
 		GLsizei count;		// Number of indices in iteration
-		glm::mat3 bbfix;	// Scale and rotate to [-1,1], centered at origin
+		glm::mat4 bbfix;	// Scale and rotate to [-1,1], centered at origin
 	};
 
 	// OpenGL state
@@ -60,7 +60,7 @@ private:
 	GLuint vbo;							// Vertex buffer
 	std::vector<IterData> iterData;		// Iteration data
 	GLsizei bufSize;					// Current size of the buffer
-	void addVerts(std::vector<glm::vec2>& verts);	// Add iter geometry to buffer
+	void addVerts(std::vector<glm::vec3>& verts);	// Add iter geometry to buffer
 
 	// Shared OpenGL state (shader)
 	static unsigned int refcount;		// Reference counter
