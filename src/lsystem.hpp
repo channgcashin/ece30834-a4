@@ -31,6 +31,8 @@ public:
 	void draw(glm::mat4 viewProj);
 	void drawIter(unsigned int iter, glm::mat4 viewProj);
 
+	void update_time(float time);
+
 	// Data access
 	unsigned int getNumIter() const {
 		return strings.size(); }
@@ -53,6 +55,10 @@ private:
 		GLsizei count;		// Number of indices in iteration
 		glm::mat4 bbfix;	// Scale and rotate to [-1,1], centered at origin
 	};
+
+	float cur_time;
+	GLuint time_uniform_loc;
+	float rot;
 
 	// OpenGL state
 	static const GLsizei MAX_BUF = 1 << 26;		// Maximum buffer size

@@ -1,10 +1,14 @@
 #version 330
 
 layout(location = 0) in vec3 pos;		// World-space position
+layout(location = 1) in vec3 norm;		// Model-space normal
+
+smooth out vec3 fragNorm;	// Model-space interpolated normal
 
 uniform mat4 xform;			// World-to-clip transform matrix
 
 void main() {
 	// Output clip-space position
 	gl_Position = xform * vec4(pos, 1.0);
+	fragNorm = norm;
 }

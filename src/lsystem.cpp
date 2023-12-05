@@ -196,10 +196,14 @@ void LSystem::drawIter(unsigned int iter, glm::mat4 viewProj) {
 
 	glUseProgram(shader);
 	glBindVertexArray(vao);
-
+	glm::mat4 res = glm::mat4(1.0f);
+	rot += 360.0;
+	res[0] = glm::vec4(cos(glm::radians(rot)), 0.0f, -sin(glm::radians(rot)), 0.0f);
+	res[2] = glm::vec4(sin(glm::radians(rot)), 0.0f, cos(glm::radians(rot)), 0.0f);
 	// Send matrix to shader
-	glm::mat4 xform = viewProj * id.bbfix;
-	glUniformMatrix3fv(xformLoc, 1, GL_FALSE, glm::value_ptr(xform));
+	glm::mat4 xform = viewProj * id.bbfix * res;
+	glUniformMatrix4fv(xformLoc, 1, GL_FALSE, glm::value_ptr(xform));
+	glUniform1f(time_uniform_loc, cur_time);
 	// Draw L-System
 	glDrawArrays(GL_LINES, id.first, id.count);
 
@@ -237,15 +241,19 @@ std::vector<glm::vec3> LSystem::createGeometry(std::string string) {
 	glm::vec3 curr = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 prev = glm::vec3(0.0f, 0.0f, 0.0f);
 	float ang = 90;
+	float angZ = 90;
 	std::stack<glm::vec3> curr_stack;
 	std::stack<glm::vec3> prev_stack;
 	std::stack<float> ang_stack;
+	std::stack<float> angZ_stack;
 	float pi = 3.1415926;
 	//float ang = angle * (math.pi/180) + (math.pi/2);
 	for(auto ch : string){
 		if (ch == 'f' || ch == 'F' || ch == 'g' || ch == 'G') {
 			curr[0] = cos((ang*pi)/180) + curr[0];
 			curr[1] = sin((ang*pi)/180) + curr[1];
+			//curr[1] = sin((angZ*pi)/180) + curr[1];
+			curr[2] = cos((angZ*pi)/180) + curr[2];
 			verts.push_back(prev);
 			verts.push_back(curr);
 			prev = curr;
@@ -253,6 +261,7 @@ std::vector<glm::vec3> LSystem::createGeometry(std::string string) {
 		else if (ch == 's' || ch == 'S') {
 			curr[0] = cos((ang*pi)/180) + curr[0];
 			curr[1] = sin((ang*pi)/180) + curr[1];
+			curr[2] = cos((angZ*pi)/180) + curr[2];
 			prev = curr;
 		}
 		else if(ch == '+'){
@@ -261,21 +270,34 @@ std::vector<glm::vec3> LSystem::createGeometry(std::string string) {
 		else if(ch == '-'){
 			ang -= angle;
 		}
+		else if(ch == '*'){
+			angZ += angle;
+		}
+		else if(ch == '/'){
+			angZ -= angle;
+		}
 		else if(ch == '['){
 			prev_stack.push(prev);
 			curr_stack.push(curr);
 			ang_stack.push(ang);
+			angZ_stack.push(angZ);
 		}
 		else if(ch == ']'){
 			prev = prev_stack.top();
 			curr = curr_stack.top();
 			ang = ang_stack.top();
+			angZ = angZ_stack.top();
 			prev_stack.pop();
 			curr_stack.pop();
 			ang_stack.pop();
+			angZ_stack.pop();
 		}
 	}
 	return verts;
+}
+
+void LSystem::update_time(float time) {
+	cur_time = time;
 }
 
 // Add given geometry to the OpenGL vertex buffer and update state accordingly
@@ -293,12 +315,13 @@ void LSystem::addVerts(std::vector<glm::vec3>& verts) {
 	// Calculate bounding box and create adjustment matrix
 	glm::vec3 minBB = glm::vec3(std::numeric_limits<float>::max());
 	glm::vec3 maxBB = glm::vec3(std::numeric_limits<float>::lowest());
+
 	for (auto& v : verts) {
 		minBB = glm::min(minBB, v);
 		maxBB = glm::max(maxBB, v);
 	}
 	glm::vec3 diag = maxBB - minBB;
-	float scale = 1.9f / glm::max(diag.x, diag.y);
+	float scale = 1.9f / glm::max(glm::max(diag.x, diag.y), diag.z);
 	id.bbfix = glm::mat4(1.0f);
 	id.bbfix[0][0] = scale;
 	id.bbfix[1][1] = scale;
@@ -332,7 +355,6 @@ void LSystem::addVerts(std::vector<glm::vec3>& verts) {
 	// Upload new vertex data
 	glBufferSubData(GL_ARRAY_BUFFER,
 		id.first * sizeof(glm::vec3), id.count * sizeof(glm::vec3), verts.data());
-
 
 	// Reset vertex data source (format)
 	if (!vao) {

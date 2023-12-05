@@ -41,7 +41,7 @@ void cleanup();
 
 // Program entry point
 int main(int argc, char** argv) {
-	std::string configFile = "models/dragon.txt";
+	std::string configFile = "models/tree1.txt";
 	if (argc > 1)
 		configFile = std::string(argv[1]);
 
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 		initMenu();
 
 		// OpenGL settings
-		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+		glClearColor(0.0f, 0.2f, 0.2f, 1.0f);
 		glClearDepth(1.0f);
 		glEnable(GL_DEPTH_TEST);
 
@@ -144,6 +144,7 @@ void findModelFiles() {
 
 // Called whenever a screen redraw is requested
 void display() {
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	float aspect = (float)width / (float)height;
@@ -219,10 +220,18 @@ void mouseBtn(int button, int state, int x, int y) {}
 // Called when the mouse moves
 void mouseMove(int x, int y) {}
 
+static auto start = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+
 // Called when there are no events to process
 void idle() {
 	// Anything that happens every frame (e.g. movement) should be done here
 	// Be sure to call glutPostRedisplay() if the screen needs to update as well
+	auto	finish	= std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());	// record end time
+	auto	elapsed = static_cast<float>((finish - start).count());
+
+	if ((int)elapsed % 200 == 0) {
+		glutPostRedisplay();
+	}
 }
 
 // Called when a menu button is pressed
