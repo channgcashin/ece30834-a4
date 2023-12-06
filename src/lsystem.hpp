@@ -29,7 +29,7 @@ public:
 
 	// Draw the L-System
 	void draw(glm::mat4 viewProj);
-	void drawIter(unsigned int iter, glm::mat4 viewProj);
+	void drawIter(unsigned int iter, glm::mat4 viewProj, float line_width);
 
 	void update_time(float time);
 
@@ -59,6 +59,7 @@ private:
 	float cur_time;
 	GLuint time_uniform_loc;
 	float rot;
+	float line_width;
 
 	// OpenGL state
 	static const GLsizei MAX_BUF = 1 << 26;		// Maximum buffer size

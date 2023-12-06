@@ -154,7 +154,12 @@ void display() {
 
 	// Draw the L-System
 	if (lsystem && lsystem->getNumIter() > 0)
-		lsystem->drawIter(iter, proj);
+		if(iter == 1){
+			lsystem->drawIter(iter, proj, 4.0f);
+		}else{
+			lsystem->drawIter(iter, proj, 1.0f);
+		}
+		
 
 	// Scene is rendered to the back buffer, so swap the buffers to display it
 	glutSwapBuffers();

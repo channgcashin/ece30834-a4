@@ -188,11 +188,11 @@ unsigned int LSystem::iterate() {
 // Draw the latest iteration of the L-System
 void LSystem::draw(glm::mat4 viewProj) {
 	if (!getNumIter()) return;
-	drawIter(getNumIter() - 1, viewProj);
+	drawIter(getNumIter() - 1, viewProj, 1.0f);
 }
 
 // Draw a specific iteration of the L-System
-void LSystem::drawIter(unsigned int iter, glm::mat4 viewProj) {
+void LSystem::drawIter(unsigned int iter, glm::mat4 viewProj, float line_width) {
 	IterData& id = iterData.at(iter);
 
 	glUseProgram(shader);
@@ -201,6 +201,7 @@ void LSystem::drawIter(unsigned int iter, glm::mat4 viewProj) {
 	rot += 2.0;
 	res[0] = glm::vec4(cos(glm::radians(rot)), 0.0f, -sin(glm::radians(rot)), 0.0f);
 	res[2] = glm::vec4(sin(glm::radians(rot)), 0.0f, cos(glm::radians(rot)), 0.0f);
+	
 	// Send matrix to shader
 	glm::mat4 xform = viewProj * id.bbfix * res;
 	glUniformMatrix4fv(xformLoc, 1, GL_FALSE, glm::value_ptr(xform));
@@ -285,7 +286,6 @@ std::vector<glm::vec3> LSystem::createGeometry(std::string string) {
 			//rl = glm::mat4(1.0f);
 			//rl[0] = glm::vec3(cos(glm::radians(-ang)), 0.0f, -sin(glm::radians(-ang)));
 			//rl[2] = glm::vec3(sin(glm::radians(-ang)), 0.0f, cos(glm::radians(-ang)));
-			printf("Rotate y\n");
 			glm::mat4 y_rot = glm::rotate(glm::radians(-ang), glm::vec3(0.0,1.0,0.0));
 			dir = glm::vec3(y_rot * glm::vec4(dir, 0.0));
 		}
@@ -294,7 +294,6 @@ std::vector<glm::vec3> LSystem::createGeometry(std::string string) {
 			dir = glm::vec3(z_rot * glm::vec4(dir, 0.0));
 		}
 		else if(ch == '/'){
-			printf("Rotate z\n");
 			glm::mat4 z_rot = glm::rotate(glm::radians(-ang), glm::vec3(0.0,0.0,1.0));
 			dir = glm::vec3(z_rot * glm::vec4(dir, 0.0));
 		}
@@ -388,12 +387,25 @@ void LSystem::addVerts(std::vector<glm::vec3>& verts) {
 	if (!vao) {
 		glGenVertexArrays(1, &vao);
 	}
+	line_width = 1.0f;
+	glLineWidth(line_width);
+
+	/* for (auto& v : verts) {
+		if(v[0] || v[1]){
+			glLineWidth(10.0f);
+			break;
+		} else {
+			glLineWidth(1.0f);
+		}
+	} */
+
 	glBindVertexArray(vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
-
+	
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
+	
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
