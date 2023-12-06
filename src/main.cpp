@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 		initMenu();
 
 		// OpenGL settings
-		glClearColor(0.0f, 0.2f, 0.2f, 1.0f);
+		glClearColor(0.68f, 0.85f, 0.90f, 0.0f);
 		glClearDepth(1.0f);
 		glEnable(GL_DEPTH_TEST);
 
@@ -229,7 +229,7 @@ void idle() {
 	auto	finish	= std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());	// record end time
 	auto	elapsed = static_cast<float>((finish - start).count());
 
-	if ((int)elapsed % 200 == 0) {
+	if ((int)elapsed % 50 == 0) {
 		glutPostRedisplay();
 	}
 }

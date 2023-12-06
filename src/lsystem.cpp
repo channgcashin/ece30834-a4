@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <stack>
+#include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <math.h>
 #include "util.hpp"
@@ -197,7 +198,7 @@ void LSystem::drawIter(unsigned int iter, glm::mat4 viewProj) {
 	glUseProgram(shader);
 	glBindVertexArray(vao);
 	glm::mat4 res = glm::mat4(1.0f);
-	rot += 360.0;
+	rot += 2.0;
 	res[0] = glm::vec4(cos(glm::radians(rot)), 0.0f, -sin(glm::radians(rot)), 0.0f);
 	res[2] = glm::vec4(sin(glm::radians(rot)), 0.0f, cos(glm::radians(rot)), 0.0f);
 	// Send matrix to shader
@@ -240,57 +241,84 @@ std::vector<glm::vec3> LSystem::createGeometry(std::string string) {
 	// segment.
 	glm::vec3 curr = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 prev = glm::vec3(0.0f, 0.0f, 0.0f);
-	float ang = 90;
-	float angZ = 90;
+	glm::vec3 dir = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::mat3 ru = glm::mat4(1.0f);
+	glm::mat3 rl = glm::mat4(1.0f);
+	glm::mat3 rh = glm::mat4(1.0f);
 	std::stack<glm::vec3> curr_stack;
 	std::stack<glm::vec3> prev_stack;
+	std::stack<glm::vec3> dir_stack;
 	std::stack<float> ang_stack;
-	std::stack<float> angZ_stack;
 	float pi = 3.1415926;
-	//float ang = angle * (math.pi/180) + (math.pi/2);
+	float ang = angle;
+	ru[0] = glm::vec3(cos(glm::radians(45.0)), sin(glm::radians(45.0)), 0.0f);
+	ru[1] = glm::vec3(-sin(glm::radians(45.0)), cos(glm::radians(45.0)), 0.0f);
+	//dir = ru * dir; 
 	for(auto ch : string){
 		if (ch == 'f' || ch == 'F' || ch == 'g' || ch == 'G') {
-			curr[0] = cos((ang*pi)/180) + curr[0];
-			curr[1] = sin((ang*pi)/180) + curr[1];
-			//curr[1] = sin((angZ*pi)/180) + curr[1];
-			curr[2] = cos((angZ*pi)/180) + curr[2];
+			curr[0] = curr[0] + dir[0];
+			curr[1] = curr[1] + dir[1];
+			curr[2] = curr[2] + dir[2];
 			verts.push_back(prev);
 			verts.push_back(curr);
 			prev = curr;
 		}
 		else if (ch == 's' || ch == 'S') {
-			curr[0] = cos((ang*pi)/180) + curr[0];
-			curr[1] = sin((ang*pi)/180) + curr[1];
-			curr[2] = cos((angZ*pi)/180) + curr[2];
+			curr[0] = curr[0] + dir[0];
+			curr[1] = curr[1] + dir[1];
+			curr[2] = curr[2] + dir[2];
 			prev = curr;
 		}
 		else if(ch == '+'){
-			ang += angle;
+			glm::mat4 x_rot = glm::rotate(glm::radians(ang), glm::vec3(1.0,0.0,0.0));
+			dir = glm::vec3(x_rot * glm::vec4(dir, 0.0));
 		}
 		else if(ch == '-'){
-			ang -= angle;
+			glm::mat4 x_rot = glm::rotate(glm::radians(-ang), glm::vec3(1.0,0.0,0.0));
+			dir = glm::vec3(x_rot * glm::vec4(dir, 0.0));
 		}
-		else if(ch == '*'){
-			angZ += angle;
+		else if(ch == '&'){
+			glm::mat4 y_rot = glm::rotate(glm::radians(ang), glm::vec3(0.0,1.0,0.0));
+			dir = glm::vec3(y_rot * glm::vec4(dir, 0.0));
+		}
+		else if(ch == '^'){
+			//rl = glm::mat4(1.0f);
+			//rl[0] = glm::vec3(cos(glm::radians(-ang)), 0.0f, -sin(glm::radians(-ang)));
+			//rl[2] = glm::vec3(sin(glm::radians(-ang)), 0.0f, cos(glm::radians(-ang)));
+			printf("Rotate y\n");
+			glm::mat4 y_rot = glm::rotate(glm::radians(-ang), glm::vec3(0.0,1.0,0.0));
+			dir = glm::vec3(y_rot * glm::vec4(dir, 0.0));
+		}
+		else if(ch == '\\'){
+			glm::mat4 z_rot = glm::rotate(glm::radians(ang), glm::vec3(0.0,0.0,1.0));
+			dir = glm::vec3(z_rot * glm::vec4(dir, 0.0));
 		}
 		else if(ch == '/'){
-			angZ -= angle;
+			printf("Rotate z\n");
+			glm::mat4 z_rot = glm::rotate(glm::radians(-ang), glm::vec3(0.0,0.0,1.0));
+			dir = glm::vec3(z_rot * glm::vec4(dir, 0.0));
+		}
+		else if(ch == '|'){
+			ru = glm::mat4(1.0f);
+			ru[0] = glm::vec3(cos(glm::radians(180.0)), sin(glm::radians(180.0)), 0.0f);
+			ru[1] = glm::vec3(-sin(glm::radians(180.0)), cos(glm::radians(180.0)), 0.0f);
+			dir = ru * dir;
 		}
 		else if(ch == '['){
 			prev_stack.push(prev);
 			curr_stack.push(curr);
 			ang_stack.push(ang);
-			angZ_stack.push(angZ);
+			dir_stack.push(dir);
 		}
 		else if(ch == ']'){
 			prev = prev_stack.top();
 			curr = curr_stack.top();
 			ang = ang_stack.top();
-			angZ = angZ_stack.top();
+			dir = dir_stack.top();
+			dir_stack.pop();
 			prev_stack.pop();
 			curr_stack.pop();
 			ang_stack.pop();
-			angZ_stack.pop();
 		}
 	}
 	return verts;
@@ -356,7 +384,7 @@ void LSystem::addVerts(std::vector<glm::vec3>& verts) {
 	glBufferSubData(GL_ARRAY_BUFFER,
 		id.first * sizeof(glm::vec3), id.count * sizeof(glm::vec3), verts.data());
 
-	// Reset vertex data source (format)
+	// set vertex data source (format)
 	if (!vao) {
 		glGenVertexArrays(1, &vao);
 	}
